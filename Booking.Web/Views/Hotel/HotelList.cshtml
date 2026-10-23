@@ -1,0 +1,193 @@
+@model HotelListViewModel
+@{
+    ViewData["Title"] = (Model.DestinationLabel ?? Model.Search.Destination) + " Otelleri";
+    ViewData["ActiveMenu"] = "hotels";
+    ViewData["BodyClass"] = "theme-soft";
+    ViewData["Currency"] = Model.Search.Currency;
+    ViewData["Search"] = Model.Search; // _HotelCard partial'ı için
+}
+
+@section Styles {
+    <style>
+        .search-summary { padding: 0.5rem 0 2.5rem; }
+        .page-title { font-size: clamp(1.9rem, 3.5vw, 2.6rem); letter-spacing: -0.035em; margin-bottom: 0.35rem; }
+        .page-text { color: var(--sf-muted); font-size: 1.05rem; margin-bottom: 1.75rem; }
+        .summary-panel { background: #fff; border-radius: var(--sf-radius-lg); box-shadow: var(--sf-shadow); padding: 0.5rem; }
+        .summary-field { display: flex; align-items: center; gap: 0.7rem; height: 100%; padding: 0.6rem 1rem; border-radius: var(--sf-radius); position: relative; transition: background-color 0.2s ease; }
+        .summary-field:hover, .summary-field:focus-within { background: var(--sf-bg-soft); }
+        .summary-field > i { color: var(--sf-primary); font-size: 1.1rem; flex-shrink: 0; }
+        .summary-body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+        .summary-label { font-size: 0.75rem; font-weight: 600; color: var(--sf-muted); line-height: 1.3; }
+        .summary-input, .summary-value { border: 0; background: transparent; padding: 0; font-family: inherit; font-size: 0.95rem; font-weight: 700; color: var(--sf-ink); width: 100%; outline: none; }
+        .summary-select { cursor: pointer; }
+        .btn-update { height: 100%; min-height: 52px; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0 1.4rem; background: var(--sf-primary); color: #fff; font-weight: 700; border: 0; border-radius: var(--sf-radius); white-space: nowrap; transition: background-color 0.2s ease; }
+        .btn-update:hover { background: var(--sf-primary-dark); color: #fff; }
+
+        .results-section { padding-bottom: 5rem; }
+        .results-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+        .results-count h2 { font-size: 1.2rem; font-weight: 600; margin: 0; }
+        .results-count h2 strong { font-weight: 800; }
+        .results-count span { font-size: 0.875rem; color: var(--sf-muted); }
+
+        .hotel-list { display: flex; flex-direction: column; gap: 1.25rem; }
+        .hotel-card { display: grid; grid-template-columns: 280px minmax(0, 1fr) 210px; background: #fff; border-radius: var(--sf-radius-lg); box-shadow: var(--sf-shadow-sm); overflow: hidden; transition: box-shadow 0.25s ease; }
+        .hotel-card:hover { box-shadow: var(--sf-shadow); }
+        .hotel-media { position: relative; min-height: 210px; margin: 0.75rem 0 0.75rem 0.75rem; border-radius: var(--sf-radius); overflow: hidden; background: linear-gradient(160deg, #DADDF6, #F5F6FA); }
+        .hotel-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+        .hotel-card:hover .hotel-media img { transform: scale(1.04); }
+        .fav-btn { position: absolute; top: 0.75rem; right: 0.75rem; width: 38px; height: 38px; border: 0; border-radius: 50%; background: rgba(255,255,255,0.92); color: var(--sf-ink); display: inline-flex; align-items: center; justify-content: center; font-size: 1rem; box-shadow: var(--sf-shadow-sm); transition: color 0.2s ease; }
+        .fav-btn:hover, .fav-btn.is-active { color: #D6455D; }
+        .hotel-info { padding: 1.4rem 1.5rem; min-width: 0; }
+        .hotel-name { font-size: 1.3rem; margin: 0 0 0.25rem; line-height: 1.25; }
+        .hotel-name a:hover { color: var(--sf-primary); }
+        .hotel-stars { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; }
+        .stars { font-size: 0.9rem; }
+        .stars-text { font-size: 0.8rem; color: var(--sf-muted); font-weight: 600; }
+        .hotel-location { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; font-size: 0.9rem; margin: 0 0 0.2rem; color: var(--sf-ink); font-weight: 600; }
+        .hotel-location i { color: var(--sf-primary); }
+        .hotel-side { display: flex; flex-direction: column; justify-content: space-between; gap: 1rem; padding: 1.4rem 1.5rem 1.4rem 0; text-align: right; }
+        .rating { display: flex; align-items: center; justify-content: flex-end; gap: 0.7rem; }
+        .rating-text strong { display: block; color: var(--sf-ink); font-size: 0.95rem; line-height: 1.2; }
+        .rating-text span { font-size: 0.78rem; color: var(--sf-muted); white-space: nowrap; }
+        .price-box { display: flex; flex-direction: column; align-items: flex-end; }
+        .price { font-size: 1.75rem; }
+        .btn-detail { width: 100%; background: var(--sf-primary); color: #fff; font-weight: 700; font-size: 0.95rem; border: 0; border-radius: var(--sf-radius-sm); padding: 0.7rem 1rem; margin-top: 0.5rem; transition: background-color 0.2s ease; }
+        .btn-detail:hover { background: var(--sf-primary-dark); color: #fff; }
+
+        @@media (max-width: 991.98px) {
+            .hotel-card { grid-template-columns: 1fr; }
+            .hotel-media { margin: 0.75rem 0.75rem 0; aspect-ratio: 16 / 9; min-height: 0; }
+            .hotel-info { padding: 1.25rem 1.25rem 0.5rem; }
+            .hotel-side { padding: 0.75rem 1.25rem 1.25rem; text-align: left; align-items: stretch; }
+            .rating { justify-content: flex-start; flex-direction: row-reverse; }
+            .price-box { align-items: flex-start; }
+        }
+    </style>
+}
+
+<section class="search-summary">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb sf-breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Ana Sayfa</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@(Model.DestinationLabel ?? Model.Search.Destination)</li>
+            </ol>
+        </nav>
+
+        <h1 class="page-title">@(Model.DestinationLabel ?? Model.Search.Destination) Otelleri</h1>
+        <p class="page-text">Seçtiğin kriterlere uygun konaklama seçeneklerini keşfet.</p>
+
+        <!-- Arama özeti: GET ile aynı aksiyona gönderilir -->
+        <form class="summary-panel" asp-controller="Hotel" asp-action="HotelList" method="get" role="search" data-search-form>
+            <input type="hidden" name="Adults" value="@Model.Search.Adults" />
+            <input type="hidden" name="Children" value="@Model.Search.Children" />
+            <input type="hidden" name="Rooms" value="@Model.Search.Rooms" />
+            <input type="hidden" name="ChildAges" value="@Model.Search.ChildAges" />
+
+            <div class="row g-2 g-lg-0 align-items-stretch">
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label class="summary-field" for="Destination">
+                        <i class="bi bi-geo-alt"></i>
+                        <span class="summary-body">
+                            <span class="summary-label">Lokasyon</span>
+                            <input type="text" id="Destination" name="Destination" class="summary-input" value="@Model.Search.Destination" required>
+                        </span>
+                    </label>
+                </div>
+                <div class="col-6 col-md-3 col-lg">
+                    <label class="summary-field" for="CheckIn">
+                        <i class="bi bi-calendar3"></i>
+                        <span class="summary-body">
+                            <span class="summary-label">Giriş</span>
+                            <input type="date" id="CheckIn" name="CheckIn" class="summary-input" value="@Model.Search.CheckIn">
+                        </span>
+                    </label>
+                </div>
+                <div class="col-6 col-md-3 col-lg">
+                    <label class="summary-field" for="CheckOut">
+                        <i class="bi bi-calendar3"></i>
+                        <span class="summary-body">
+                            <span class="summary-label">Çıkış</span>
+                            <input type="date" id="CheckOut" name="CheckOut" class="summary-input" value="@Model.Search.CheckOut">
+                        </span>
+                    </label>
+                </div>
+                <div class="col-12 col-md-4 col-lg">
+                    <div class="summary-field">
+                        <i class="bi bi-people"></i>
+                        <span class="summary-body">
+                            <span class="summary-label">Misafir</span>
+                            <span class="summary-value">@Model.Search.GuestSummary</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-lg-auto">
+                    <label class="summary-field" for="Currency">
+                        <span class="summary-body">
+                            <span class="summary-label">Para Birimi</span>
+                            <select id="Currency" name="Currency" class="summary-input summary-select">
+                                @foreach (var c in new[] { "EUR", "USD", "TRY", "GBP" })
+                                {
+                                    <option value="@c" selected="@(Model.Search.Currency == c)">@c</option>
+                                }
+                            </select>
+                        </span>
+                    </label>
+                </div>
+                <div class="col-12 col-lg-auto" style="padding:0.15rem;">
+                    <button type="submit" class="btn btn-update w-100">
+                        <i class="bi bi-search"></i> <span>Aramayı Güncelle</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>
+
+<section class="results-section">
+    <div class="container">
+
+        @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+        {
+            <div class="sf-alert" role="alert">
+                <i class="bi bi-exclamation-triangle"></i>
+                <span>@Model.ErrorMessage</span>
+            </div>
+        }
+
+        @if (Model.HasResults)
+        {
+            <div class="results-toolbar">
+                <div class="results-count">
+                    <h2>@(Model.DestinationLabel ?? Model.Search.Destination) için <strong>@Model.ResultCount konaklama</strong> bulundu</h2>
+                    <span>@Model.Search.CheckIn – @Model.Search.CheckOut, @Model.Search.Nights gece</span>
+                </div>
+                @if (Model.IsMockData)
+                {
+                    <span class="sf-mock-note"><i class="bi bi-info-circle"></i> Demo veri</span>
+                }
+            </div>
+
+            <div class="hotel-list">
+                @foreach (var hotel in Model.Hotels)
+                {
+                    <partial name="_HotelCard" model="hotel" />
+                }
+            </div>
+        }
+        else if (string.IsNullOrWhiteSpace(Model.ErrorMessage))
+        {
+            <div class="sf-empty">
+                <i class="bi bi-search"></i>
+                <h3>Sonuç bulunamadı</h3>
+                <p>Arama kriterlerinizi değiştirip tekrar deneyin.</p>
+            </div>
+        }
+    </div>
+</section>
+
+<!-- Arama güncellenirken gösterilen yükleniyor katmanı -->
+<div class="sf-loading-overlay" id="sfLoading" aria-live="polite" aria-hidden="true">
+    <div class="spinner-border" role="status"></div>
+    <span>Oteller aranıyor...</span>
+</div>

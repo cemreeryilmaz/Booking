@@ -1,0 +1,79 @@
+@model HotelCardViewModel
+@{
+    // Arama parametreleri detay linkinde korunur (tarih, misafir, para birimi).
+    var search = ViewData["Search"] as HotelSearchForm ?? new HotelSearchForm();
+    var stars = Model.StarRating > 0 ? new string('★', Model.StarRating) : "";
+}
+
+<article class="hotel-card" data-hotel-id="@Model.HotelId">
+    <div class="hotel-media">
+        @if (!string.IsNullOrWhiteSpace(Model.PhotoUrl))
+        {
+            <img src="@Model.PhotoUrl" alt="@Model.Name" loading="lazy">
+        }
+        <button type="button" class="fav-btn" aria-label="Favorilere ekle"><i class="bi bi-heart"></i></button>
+    </div>
+
+    <div class="hotel-info">
+        <h3 class="hotel-name">
+            <a asp-controller="Hotel" asp-action="HotelDetail"
+               asp-route-hotelId="@Model.HotelId"
+               asp-route-Destination="@search.Destination"
+               asp-route-CheckIn="@search.CheckIn"
+               asp-route-CheckOut="@search.CheckOut"
+               asp-route-Adults="@search.Adults"
+               asp-route-Children="@search.Children"
+               asp-route-ChildAges="@search.ChildAges"
+               asp-route-Rooms="@search.Rooms"
+               asp-route-Currency="@search.Currency">@Model.Name</a>
+        </h3>
+
+        @if (Model.StarRating > 0)
+        {
+            <div class="hotel-stars">
+                <span class="stars" aria-label="@Model.StarRating yıldız">@stars</span>
+                <span class="stars-text">@Model.StarRating Yıldızlı Otel</span>
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.City))
+        {
+            <p class="hotel-location">
+                <i class="bi bi-geo-alt"></i>
+                <span>@Model.City@(string.IsNullOrWhiteSpace(Model.Country) ? "" : $", {Model.Country}")</span>
+            </p>
+        }
+    </div>
+
+    <div class="hotel-side">
+        <div class="rating">
+            <div class="rating-text">
+                <strong>@(Model.ReviewScoreWord ?? "Değerlendirme")</strong>
+                @if (Model.ReviewCount.HasValue)
+                {
+                    <span>@Model.ReviewCount.Value.ToString("N0") değerlendirme</span>
+                }
+            </div>
+            @if (Model.ReviewScore.HasValue)
+            {
+                <span class="rating-score">@Model.ReviewScoreText</span>
+            }
+        </div>
+        <div class="price-box">
+            <span class="price-meta">@search.Nights gece, @search.GuestSummary</span>
+            <span class="price">@Model.PriceText</span>
+            <span class="price-note">Vergiler ve ücretler dahil olabilir</span>
+            <a asp-controller="Hotel" asp-action="HotelDetail"
+               asp-route-hotelId="@Model.HotelId"
+               asp-route-Destination="@search.Destination"
+               asp-route-CheckIn="@search.CheckIn"
+               asp-route-CheckOut="@search.CheckOut"
+               asp-route-Adults="@search.Adults"
+               asp-route-Children="@search.Children"
+               asp-route-ChildAges="@search.ChildAges"
+               asp-route-Rooms="@search.Rooms"
+               asp-route-Currency="@search.Currency"
+               class="btn btn-detail">Detayları Gör</a>
+        </div>
+    </div>
+</article>

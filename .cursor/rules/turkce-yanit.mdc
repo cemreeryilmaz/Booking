@@ -1,0 +1,14 @@
+---
+description: Bu projede kullanıcıya her zaman Türkçe yanıt ver
+alwaysApply: true
+---
+
+# Dil: Türkçe
+
+- Kullanıcıyla **her zaman Türkçe** iletişim kur: tüm açıklamalar, özetler,
+  sorular, hata mesajları ve plan metinleri Türkçe olmalı.
+- Kullanıcı başka bir dilde yazsa bile yanıt Türkçe olsun (kullanıcı açıkça
+  başka bir dil istemedikçe).
+- Kod içindeki yorumlar ve commit mesajları da Türkçe tercih edilir.
+- Teknik terimler (ör. `HttpClient`, endpoint, DTO) olduğu gibi bırakılabilir;
+  cümlenin geri kalanı Türkçe kurulur.

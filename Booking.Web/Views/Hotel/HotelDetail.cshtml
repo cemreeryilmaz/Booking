@@ -1,0 +1,456 @@
+@model HotelDetailViewModel
+@{
+    ViewData["Title"] = Model.Name ?? "Otel Detayı";
+    ViewData["ActiveMenu"] = "hotels";
+    ViewData["BodyClass"] = "theme-soft";
+    ViewData["Currency"] = Model.Currency;
+    var stars = Model.StarRating > 0 ? new string('★', Model.StarRating) : "";
+    var gallery = Model.PhotoUrls.Take(5).ToList();
+}
+
+@section Styles {
+    <style>
+        .hotel-page { padding: 0.5rem 0 5rem; }
+        .rating-score-lg { min-width: 54px; height: 54px; font-size: 1.25rem; }
+        .hotel-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 1.5rem; margin-bottom: 1.5rem; }
+        .hotel-title { font-size: clamp(1.9rem, 3.5vw, 2.6rem); letter-spacing: -0.035em; margin-bottom: 0.3rem; }
+        .hotel-stars { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; }
+        .stars-text { font-size: 0.85rem; font-weight: 600; color: var(--sf-muted); }
+        .hotel-address { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem; margin: 0; font-weight: 600; color: var(--sf-ink); }
+        .hotel-address i { color: var(--sf-primary); }
+        .heading-side { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
+        .heading-rating { display: flex; align-items: center; gap: 0.75rem; background: #fff; border-radius: var(--sf-radius); box-shadow: var(--sf-shadow-sm); padding: 0.6rem 0.6rem 0.6rem 1.1rem; text-align: right; }
+        .rating-text strong { display: block; color: var(--sf-ink); line-height: 1.2; }
+        .rating-text span { font-size: 0.8rem; color: var(--sf-muted); white-space: nowrap; }
+        .heading-actions { display: flex; gap: 0.5rem; }
+        .icon-btn { width: 44px; height: 44px; border: 0; border-radius: 50%; background: #fff; color: var(--sf-ink); box-shadow: var(--sf-shadow-sm); display: inline-flex; align-items: center; justify-content: center; font-size: 1.05rem; transition: color 0.2s ease; }
+        .icon-btn:hover { color: var(--sf-primary); }
+        .fav-btn.is-active { color: #D6455D; }
+
+        .hotel-gallery { display: grid; grid-template-columns: 2fr 1fr 1fr; grid-template-rows: repeat(2, 220px); gap: 0.75rem; margin-bottom: 2.5rem; }
+        .gallery-item { position: relative; display: block; overflow: hidden; border-radius: var(--sf-radius); background: linear-gradient(160deg, #DADDF6, #F5F6FA); }
+        .gallery-main { grid-row: span 2; border-radius: var(--sf-radius-lg); }
+        .gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.5s ease; }
+        .gallery-item:hover img { transform: scale(1.04); }
+
+        .detail-block { background: #fff; border-radius: var(--sf-radius-lg); box-shadow: var(--sf-shadow-sm); padding: 2rem; margin-bottom: 1.5rem; scroll-margin-top: 1.5rem; }
+        .block-title { font-size: 1.4rem; margin-bottom: 1.1rem; }
+        .about-text p { max-width: 68ch; margin-bottom: 0.9rem; }
+        .tag-list { display: flex; flex-wrap: wrap; gap: 0.5rem; list-style: none; padding: 0; margin: 1.25rem 0 0; }
+        .tag-list li { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 700; color: var(--sf-primary); background: var(--sf-primary-soft); padding: 0.4rem 0.85rem; border-radius: 999px; }
+
+        .facility-item { display: flex; align-items: center; gap: 0.8rem; height: 100%; padding: 0.6rem; border-radius: var(--sf-radius); transition: background-color 0.2s ease; }
+        .facility-item:hover { background: var(--sf-bg-soft); }
+        .facility-icon { width: 44px; height: 44px; border-radius: 12px; background: var(--sf-primary-soft); color: var(--sf-primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+        .facility-text strong { color: var(--sf-ink); font-size: 0.92rem; }
+
+        .location-card { border-radius: var(--sf-radius); overflow: hidden; background: var(--sf-bg-soft); }
+        .map-placeholder { position: relative; height: 260px; overflow: hidden; }
+        .map-placeholder svg { width: 100%; height: 100%; display: block; }
+        .map-pin { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; }
+        .map-pin i { font-size: 2.6rem; color: var(--sf-primary); line-height: 1; filter: drop-shadow(0 6px 10px rgba(59,63,182,0.35)); }
+        .map-pin-label { background: var(--sf-ink); color: #fff; font-size: 0.8rem; font-weight: 700; padding: 0.3rem 0.75rem; border-radius: 999px; margin-bottom: 0.3rem; white-space: nowrap; }
+        .location-body { padding: 1.25rem 1.5rem 1.5rem; }
+        .location-address { display: flex; align-items: center; gap: 0.45rem; font-weight: 700; color: var(--sf-ink); margin-bottom: 0; }
+        .location-address i { color: var(--sf-primary); }
+
+        .room-list { display: flex; flex-direction: column; gap: 1rem; }
+        .room-card { display: grid; grid-template-columns: 220px minmax(0, 1fr) 180px; gap: 1.25rem; padding: 0.75rem; border-radius: var(--sf-radius); background: var(--sf-bg-soft); transition: box-shadow 0.25s ease, background-color 0.25s ease; }
+        .room-card:hover { background: #fff; box-shadow: var(--sf-shadow); }
+        .room-media { position: relative; min-height: 140px; border-radius: 12px; overflow: hidden; background: linear-gradient(160deg, #DADDF6, #F5F6FA); }
+        .room-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .room-info { padding: 0.5rem 0; min-width: 0; }
+        .room-name { font-size: 1.15rem; margin-bottom: 0.6rem; }
+        .room-specs { display: flex; flex-wrap: wrap; list-style: none; padding: 0; margin: 0 0 0.6rem; gap: 0.35rem 1.1rem; font-size: 0.88rem; color: var(--sf-ink); font-weight: 600; }
+        .room-specs li { display: inline-flex; align-items: center; gap: 0.35rem; }
+        .room-specs i { color: var(--sf-primary); }
+        .room-price { display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end; text-align: right; padding: 0.5rem 0.5rem 0.25rem 0; }
+
+        .review-summary { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 2rem; align-items: center; }
+        .review-score-box { display: flex; flex-direction: column; align-items: center; text-align: center; background: var(--sf-primary-soft); border-radius: var(--sf-radius); padding: 1.5rem 1rem; }
+        .review-big { font-size: 3rem; font-weight: 800; color: var(--sf-primary); letter-spacing: -0.04em; line-height: 1; margin-bottom: 0.4rem; }
+        .review-score-box strong { color: var(--sf-ink); font-size: 1.05rem; }
+        .review-score-box span:last-child { font-size: 0.8rem; color: var(--sf-muted); }
+
+        .booking-card { background: #fff; border-radius: var(--sf-radius-lg); box-shadow: var(--sf-shadow); padding: 1.75rem; }
+        .booking-title { font-size: 1.2rem; margin-bottom: 1.1rem; }
+        .booking-list > div { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.55rem 0; }
+        .booking-list > div + div { border-top: 1px solid var(--sf-line); }
+        .booking-list dt { font-weight: 600; font-size: 0.88rem; color: var(--sf-muted); display: inline-flex; align-items: center; gap: 0.45rem; margin: 0; }
+        .booking-list dd { margin: 0; font-weight: 700; font-size: 0.92rem; color: var(--sf-ink); text-align: right; }
+        .booking-price { display: flex; flex-direction: column; background: var(--sf-bg-soft); border-radius: var(--sf-radius); padding: 1rem 1.2rem; margin: 1rem 0 0.5rem; }
+        .price-lg { font-size: 2.1rem; }
+        .btn-book { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; margin-top: 1.25rem; background: var(--sf-primary); color: #fff; font-weight: 700; font-size: 1.05rem; border: 0; border-radius: var(--sf-radius); padding: 0.95rem 1rem; box-shadow: 0 10px 24px rgba(59,63,182,0.35); transition: background-color 0.2s ease; }
+        .btn-book:hover { background: var(--sf-primary-dark); color: #fff; }
+        .trust-list { list-style: none; padding: 0; margin: 1.1rem 0 0; display: flex; flex-direction: column; gap: 0.35rem; }
+        .trust-list li { display: flex; align-items: center; gap: 0.45rem; font-size: 0.88rem; font-weight: 600; color: var(--sf-text); }
+        .trust-list i { color: var(--sf-success); font-size: 1.05rem; }
+
+        @@media (min-width: 992px) { .booking-card { position: sticky; top: 1.5rem; } }
+
+        .photos-block { margin-top: 1rem; }
+        .photos-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+        .slider-nav { display: flex; gap: 0.5rem; flex-shrink: 0; }
+        .slider-btn { width: 44px; height: 44px; border: 0; border-radius: 50%; background: var(--sf-bg-soft); color: var(--sf-ink); display: inline-flex; align-items: center; justify-content: center; font-size: 1.05rem; transition: background-color 0.2s ease, color 0.2s ease; }
+        .slider-btn:hover { background: var(--sf-primary); color: #fff; }
+        .photo-track { display: grid; grid-auto-flow: column; grid-auto-columns: calc((100% - 2rem) / 3); gap: 1rem; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; padding-bottom: 0.75rem; }
+        .photo-item { margin: 0; scroll-snap-align: start; }
+        .photo-frame { position: relative; display: block; aspect-ratio: 16 / 10; border-radius: var(--sf-radius); overflow: hidden; background: linear-gradient(160deg, #DADDF6, #F5F6FA); }
+        .photo-frame img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.5s ease; }
+        .photo-frame:hover img { transform: scale(1.04); }
+
+        @@media (max-width: 991.98px) {
+            .hotel-heading { flex-direction: column; align-items: flex-start; }
+            .hotel-gallery { grid-template-rows: repeat(2, 160px); }
+            .detail-layout > aside { order: 2; }
+            .photo-track { grid-auto-columns: calc((100% - 1rem) / 2); }
+        }
+        /* Rezervasyon modalı */
+        .sf-modal { border: 0; border-radius: var(--sf-radius-lg); box-shadow: var(--sf-shadow-lg); }
+        .sf-modal .modal-header { border-bottom: 1px solid var(--sf-line); }
+        .sf-modal .modal-title { display: inline-flex; align-items: center; gap: 0.5rem; }
+        .sf-modal .modal-title i { color: var(--sf-primary); }
+        .res-hotel { font-size: 1.15rem; margin-bottom: 1rem; }
+        .res-list { margin: 0; }
+        .res-list > div { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.5rem 0; }
+        .res-list > div + div { border-top: 1px solid var(--sf-line); }
+        .res-list dt { margin: 0; font-weight: 600; font-size: 0.88rem; color: var(--sf-muted); }
+        .res-list dd { margin: 0; font-weight: 700; font-size: 0.92rem; color: var(--sf-ink); text-align: right; }
+        .res-total dt, .res-total dd { font-size: 1.05rem; color: var(--sf-primary); }
+        .res-note { display: flex; align-items: flex-start; gap: 0.45rem; font-size: 0.82rem; color: var(--sf-muted); background: var(--sf-bg-soft); border-radius: var(--sf-radius); padding: 0.7rem 0.85rem; margin: 1.1rem 0 0; }
+        .res-note i { color: var(--sf-primary); margin-top: 0.1rem; }
+        .res-success { text-align: center; padding: 1.5rem 0.5rem; }
+        .res-success i { font-size: 3rem; color: var(--sf-success); display: block; margin-bottom: 0.75rem; }
+        .res-success h3 { margin-bottom: 0.4rem; }
+        .res-success p { color: var(--sf-muted); margin: 0; }
+
+        @@media (max-width: 767.98px) {
+            .hotel-gallery { grid-template-columns: repeat(4, 1fr); grid-template-rows: 220px 80px; gap: 0.5rem; }
+            .gallery-main { grid-column: 1 / -1; grid-row: auto; }
+            .room-card { grid-template-columns: 1fr; gap: 0.75rem; }
+            .room-media { aspect-ratio: 16 / 9; min-height: 0; }
+            .review-summary { grid-template-columns: 1fr; gap: 1.5rem; }
+            .photo-track { grid-auto-columns: 88%; }
+        }
+    </style>
+}
+
+<main class="hotel-page"
+      data-hotel-id="@Model.HotelId"
+      data-latitude="@(Model.Latitude?.ToString(System.Globalization.CultureInfo.InvariantCulture))"
+      data-longitude="@(Model.Longitude?.ToString(System.Globalization.CultureInfo.InvariantCulture))">
+    <div class="container">
+
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb sf-breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Ana Sayfa</a></li>
+                <li class="breadcrumb-item">
+                    <a asp-controller="Hotel" asp-action="HotelList"
+                       asp-route-Destination="@Model.Search.Destination"
+                       asp-route-CheckIn="@Model.Search.CheckIn"
+                       asp-route-CheckOut="@Model.Search.CheckOut"
+                       asp-route-Adults="@Model.Search.Adults"
+                       asp-route-Children="@Model.Search.Children"
+                       asp-route-ChildAges="@Model.Search.ChildAges"
+                       asp-route-Rooms="@Model.Search.Rooms"
+                       asp-route-Currency="@Model.Search.Currency">@(Model.City ?? Model.Search.Destination) Otelleri</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">@Model.Name</li>
+            </ol>
+        </nav>
+
+        @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+        {
+            <div class="sf-alert" role="alert">
+                <i class="bi bi-exclamation-triangle"></i>
+                <span>@Model.ErrorMessage</span>
+            </div>
+        }
+
+        <!-- Hotel Heading -->
+        <section class="hotel-heading">
+            <div class="heading-main">
+                <h1 class="hotel-title">@Model.Name</h1>
+                @if (Model.StarRating > 0)
+                {
+                    <div class="hotel-stars">
+                        <span class="stars" aria-label="@Model.StarRating yıldız">@stars</span>
+                        <span class="stars-text">@Model.StarRating Yıldızlı Otel</span>
+                    </div>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.FullAddress))
+                {
+                    <p class="hotel-address">
+                        <i class="bi bi-geo-alt"></i>
+                        <span>@Model.FullAddress</span>
+                    </p>
+                }
+            </div>
+            <div class="heading-side">
+                @if (Model.ReviewScore.HasValue)
+                {
+                    <div class="heading-rating">
+                        <div class="rating-text">
+                            <strong>@(Model.ReviewScoreWord ?? "Değerlendirme")</strong>
+                            @if (Model.ReviewCount.HasValue)
+                            {
+                                <span>@Model.ReviewCount.Value.ToString("N0") değerlendirme</span>
+                            }
+                        </div>
+                        <span class="rating-score rating-score-lg">@Model.ReviewScoreText</span>
+                    </div>
+                }
+                <div class="heading-actions">
+                    <button type="button" class="icon-btn fav-btn" aria-label="Favorilere ekle"><i class="bi bi-heart"></i></button>
+                    <button type="button" class="icon-btn share-btn" data-share aria-label="Paylaş"><i class="bi bi-share"></i></button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gallery -->
+        @if (gallery.Count > 0)
+        {
+            <section class="hotel-gallery" aria-label="Otel fotoğrafları">
+                @for (int i = 0; i < 5; i++)
+                {
+                    var cls = i == 0 ? "gallery-item gallery-main" : "gallery-item";
+                    <a href="#hotelPhotos" class="@cls">
+                        @if (i < gallery.Count)
+                        {
+                            <img src="@gallery[i]" alt="@Model.Name fotoğraf @(i + 1)" loading="lazy">
+                        }
+                    </a>
+                }
+            </section>
+        }
+
+        <div class="row g-4 g-xl-5 detail-layout">
+            <!-- Sol kolon -->
+            <div class="col-lg-8">
+
+                <!-- Otel Hakkında -->
+                <section class="detail-block" id="about">
+                    <h2 class="block-title">Otel Hakkında</h2>
+                    <div class="about-text">
+                        @if (!string.IsNullOrWhiteSpace(Model.Description))
+                        {
+                            @foreach (var paragraph in Model.Description.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                            {
+                                <p>@paragraph</p>
+                            }
+                        }
+                        else
+                        {
+                            <p>@Model.Name, @Model.City bölgesinde konforlu bir konaklama seçeneğidir. Aşağıda otelin konumu, sunduğu imkanlar ve uygun odalar yer almaktadır.</p>
+                        }
+                    </div>
+                    @if (Model.Highlights.Any())
+                    {
+                        <ul class="tag-list">
+                            @foreach (var h in Model.Highlights.Take(6))
+                            {
+                                <li><i class="bi bi-check2-circle"></i> @h</li>
+                            }
+                        </ul>
+                    }
+                </section>
+
+                <!-- İmkanlar -->
+                @if (Model.Facilities.Any())
+                {
+                    <section class="detail-block" id="facilities">
+                        <h2 class="block-title">Popüler Özellikler</h2>
+                        <div class="row g-3">
+                            @foreach (var f in Model.Facilities.Take(12))
+                            {
+                                <div class="col-6 col-md-4">
+                                    <div class="facility-item">
+                                        <span class="facility-icon"><i class="bi @f.Icon"></i></span>
+                                        <span class="facility-text"><strong>@f.Name</strong></span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </section>
+                }
+
+                <!-- Konum -->
+                <section class="detail-block" id="location">
+                    <h2 class="block-title">Otel Konumu</h2>
+                    <div class="location-card">
+                        <div class="map-placeholder" role="img" aria-label="Otel konumu haritası">
+                            <svg viewBox="0 0 800 300" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <rect width="800" height="300" fill="#EEF0F6" />
+                                <rect x="40" y="30" width="150" height="90" rx="14" fill="#DCEFE4" />
+                                <rect x="590" y="190" width="170" height="80" rx="14" fill="#DCEFE4" />
+                                <g stroke="#FFFFFF" stroke-linecap="round" fill="none">
+                                    <path d="M0 150 L800 130" stroke-width="18" />
+                                    <path d="M260 0 L320 300" stroke-width="16" />
+                                    <path d="M560 0 L500 300" stroke-width="14" />
+                                </g>
+                            </svg>
+                            <div class="map-pin">
+                                <span class="map-pin-label">@Model.Name</span>
+                                <i class="bi bi-geo-alt-fill"></i>
+                            </div>
+                        </div>
+                        <div class="location-body">
+                            <p class="location-address">
+                                <i class="bi bi-geo-alt"></i>
+                                <span>@Model.FullAddress</span>
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Odalar -->
+                @if (Model.Rooms.Any())
+                {
+                    <section class="detail-block" id="rooms">
+                        <h2 class="block-title">Uygun Odalar</h2>
+                        <p class="price-meta" style="margin-bottom:1rem;">@Model.Search.CheckIn – @Model.Search.CheckOut · @Model.Search.Nights Gece · @Model.Search.GuestSummary</p>
+                        <div class="room-list">
+                            @foreach (var room in Model.Rooms)
+                            {
+                                <article class="room-card" data-room-id="@room.RoomId">
+                                    <div class="room-media">
+                                        @if (!string.IsNullOrWhiteSpace(room.PhotoUrl))
+                                        {
+                                            <img src="@room.PhotoUrl" alt="@room.Name" loading="lazy">
+                                        }
+                                    </div>
+                                    <div class="room-info">
+                                        <h3 class="room-name">@room.Name</h3>
+                                        <ul class="room-specs">
+                                            @if (!string.IsNullOrWhiteSpace(room.MaxOccupancy))
+                                            {
+                                                <li><i class="bi bi-people"></i> @room.MaxOccupancy</li>
+                                            }
+                                        </ul>
+                                    </div>
+                                    <div class="room-price">
+                                        <span class="price-meta">@Model.Search.Nights gece için</span>
+                                        <span class="price">@room.PriceText</span>
+                                        <button type="button" class="btn btn-primary-sf w-100 btn-select-room" style="margin-top:0.5rem;"
+                                                data-room-name="@room.Name" data-room-price="@room.PriceText">Odayı Seç</button>
+                                    </div>
+                                </article>
+                            }
+                        </div>
+                    </section>
+                }
+
+                <!-- Değerlendirme -->
+                @if (Model.ReviewScore.HasValue)
+                {
+                    <section class="detail-block" id="reviews">
+                        <h2 class="block-title">Misafir Değerlendirmeleri</h2>
+                        <div class="review-summary">
+                            <div class="review-score-box">
+                                <span class="review-big">@Model.ReviewScoreText</span>
+                                <strong>@(Model.ReviewScoreWord ?? "Değerlendirme")</strong>
+                                <span>@(Model.ReviewCount?.ToString("N0") ?? "0") değerlendirme</span>
+                            </div>
+                            <div>
+                                <p class="section-text" style="color:var(--sf-muted);">
+                                    Bu otel @Model.ReviewCount?.ToString("N0") misafir tarafından değerlendirildi ve
+                                    <strong>@Model.ReviewScoreText / 10</strong> puan aldı.
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+                }
+            </div>
+
+            <!-- Sağ kolon: rezervasyon özeti -->
+            <aside class="col-lg-4">
+                <div class="booking-card">
+                    <h2 class="booking-title">Konaklama Özeti</h2>
+                    <dl class="booking-list">
+                        <div><dt><i class="bi bi-box-arrow-in-right"></i> Giriş</dt><dd>@Model.Search.CheckIn</dd></div>
+                        <div><dt><i class="bi bi-box-arrow-right"></i> Çıkış</dt><dd>@Model.Search.CheckOut</dd></div>
+                        <div><dt><i class="bi bi-moon"></i> Süre</dt><dd>@Model.Search.Nights Gece</dd></div>
+                        <div><dt><i class="bi bi-people"></i> Misafir</dt><dd>@Model.Search.GuestSummary</dd></div>
+                        <div><dt><i class="bi bi-door-closed"></i> Oda</dt><dd>@Model.Search.Rooms Oda</dd></div>
+                    </dl>
+                    <div class="booking-price">
+                        <span class="price-meta">Başlangıç fiyatı</span>
+                        <span class="price price-lg">@Model.PriceText</span>
+                        <span class="price-meta">@Model.Search.Nights gece için</span>
+                    </div>
+                    <a href="#rooms" class="btn btn-book w-100" data-book><i class="bi bi-door-open"></i> Oda Seç</a>
+                    <ul class="trust-list">
+                        <li><i class="bi bi-check2"></i> Anında Onay</li>
+                        <li><i class="bi bi-check2"></i> Güvenli İşlem</li>
+                        <li><i class="bi bi-check2"></i> Ücretsiz İptal Seçenekleri</li>
+                    </ul>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Fotoğraf Slider -->
+        @if (Model.PhotoUrls.Any())
+        {
+            <section class="detail-block photos-block" id="hotelPhotos">
+                <div class="photos-head">
+                    <div>
+                        <h2 class="block-title">@Model.Name Fotoğrafları</h2>
+                        <p class="price-meta">Odaları ve otelin sunduğu imkanları daha yakından inceleyin.</p>
+                    </div>
+                    <div class="slider-nav">
+                        <button type="button" class="slider-btn" data-dir="-1" aria-label="Önceki fotoğraflar"><i class="bi bi-chevron-left"></i></button>
+                        <button type="button" class="slider-btn" data-dir="1" aria-label="Sonraki fotoğraflar"><i class="bi bi-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div class="photo-track" id="photoTrack" tabindex="0" aria-label="Otel fotoğrafları kaydırılabilir alan">
+                    @foreach (var photo in Model.PhotoUrls)
+                    {
+                        <figure class="photo-item">
+                            <a href="@photo" target="_blank" class="photo-frame">
+                                <img src="@photo" alt="@Model.Name fotoğrafı" loading="lazy">
+                            </a>
+                        </figure>
+                    }
+                </div>
+            </section>
+        }
+    </div>
+</main>
+
+<!-- Demo rezervasyon onay modalı -->
+<div class="modal fade" id="reservationModal" tabindex="-1" aria-hidden="true" aria-labelledby="reservationModalLabel">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content sf-modal">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="reservationModalLabel"><i class="bi bi-bag-check"></i> Rezervasyon Özeti</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Özet görünümü -->
+                <div id="reservationSummary">
+                    <h3 class="res-hotel">@Model.Name</h3>
+                    <dl class="res-list">
+                        <div><dt>Oda</dt><dd data-res-room>Standart Oda</dd></div>
+                        <div><dt>Giriş</dt><dd>@Model.Search.CheckIn</dd></div>
+                        <div><dt>Çıkış</dt><dd>@Model.Search.CheckOut</dd></div>
+                        <div><dt>Süre</dt><dd>@Model.Search.Nights Gece</dd></div>
+                        <div><dt>Misafir</dt><dd>@Model.Search.GuestSummary</dd></div>
+                        <div class="res-total"><dt>Toplam</dt><dd data-res-price>@Model.PriceText</dd></div>
+                    </dl>
+                    <p class="res-note"><i class="bi bi-info-circle"></i> Bu bir demo onay ekranıdır; gerçek bir ödeme veya rezervasyon gerçekleştirilmez.</p>
+                </div>
+                <!-- Başarı görünümü -->
+                <div id="reservationSuccess" class="res-success d-none" aria-live="polite">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <h3 class="h5">Rezervasyon talebiniz alındı!</h3>
+                    <p>Teşekkürler. Bu demo akışında onay e‑postası gönderilmez.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Kapat</button>
+                <button type="button" class="btn btn-primary-sf" id="reservationConfirm"><i class="bi bi-check2"></i> Rezervasyonu Onayla</button>
+            </div>
+        </div>
+    </div>
+</div>

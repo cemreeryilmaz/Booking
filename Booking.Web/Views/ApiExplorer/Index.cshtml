@@ -1,0 +1,136 @@
+@model IReadOnlyList<Booking.Web.Models.ApiEndpointGroup>
+@{
+    ViewData["Title"] = "API Gezgini";
+    ViewData["ActiveMenu"] = "api";
+    ViewData["BodyClass"] = "theme-soft";
+    var total = Model.Sum(g => g.Endpoints.Count);
+    var liveCount = Model.Sum(g => g.Endpoints.Count(e => e.IsLive));
+}
+
+@section Styles {
+    <style>
+        .api-page { padding: 1rem 0 5rem; }
+        .api-head { margin-bottom: 2rem; }
+        .api-title { font-size: clamp(1.9rem, 3.5vw, 2.6rem); letter-spacing: -0.035em; margin-bottom: 0.4rem; }
+        .api-stats { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+        .api-stat { background: var(--sf-primary-soft); color: var(--sf-primary); font-weight: 700; font-size: 0.85rem; padding: 0.4rem 0.85rem; border-radius: 999px; }
+
+        .api-console { background: #fff; border-radius: var(--sf-radius-lg); box-shadow: var(--sf-shadow); padding: 1.5rem; margin-bottom: 2rem; }
+        .api-console h2 { font-size: 1.2rem; margin-bottom: 0.3rem; }
+        .api-console p { color: var(--sf-muted); font-size: 0.9rem; margin-bottom: 1rem; }
+        .api-console .input-row { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
+        .api-console label { font-weight: 700; font-size: 0.85rem; color: var(--sf-ink); }
+        .api-console input { flex: 1; min-width: 180px; border: 1px solid var(--sf-line); border-radius: var(--sf-radius); padding: 0.55rem 0.9rem; font-family: inherit; font-size: 0.95rem; }
+        .api-result { background: #0F1221; color: #E6E8F5; border-radius: var(--sf-radius); padding: 1rem 1.2rem; font-family: "Cascadia Code", Consolas, monospace; font-size: 0.82rem; line-height: 1.5; max-height: 460px; overflow: auto; white-space: pre-wrap; word-break: break-word; margin: 0; }
+        .api-result-meta { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: var(--sf-muted); margin-bottom: 0.5rem; min-height: 1.2rem; }
+
+        .api-group { margin-bottom: 1.75rem; }
+        .api-group-head { display: flex; align-items: baseline; gap: 0.6rem; margin-bottom: 0.9rem; }
+        .api-group-head h2 { font-size: 1.25rem; margin: 0; }
+        .api-group-head span { font-size: 0.85rem; color: var(--sf-muted); }
+        .api-endpoint { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; background: #fff; border-radius: var(--sf-radius); box-shadow: var(--sf-shadow-sm); padding: 0.85rem 1.1rem; margin-bottom: 0.6rem; }
+        .api-endpoint .ep-main { min-width: 0; }
+        .api-endpoint .ep-path { font-family: "Cascadia Code", Consolas, monospace; font-size: 0.85rem; font-weight: 700; color: var(--sf-primary); word-break: break-all; }
+        .api-endpoint .ep-desc { font-size: 0.85rem; color: var(--sf-muted); margin: 0.15rem 0 0; }
+        .api-endpoint .ep-method { font-size: 0.7rem; font-weight: 800; color: var(--sf-success); background: rgba(46,196,122,0.12); padding: 0.2rem 0.5rem; border-radius: 6px; margin-right: 0.5rem; }
+        .btn-try { border: 0; border-radius: var(--sf-radius-sm); background: var(--sf-primary); color: #fff; font-weight: 700; font-size: 0.85rem; padding: 0.5rem 1rem; white-space: nowrap; transition: background-color 0.2s ease; }
+        .btn-try:hover { background: var(--sf-primary-dark); }
+        .ep-tag { font-size: 0.72rem; font-weight: 700; color: var(--sf-muted); border: 1px dashed var(--sf-line); border-radius: 999px; padding: 0.3rem 0.7rem; white-space: nowrap; }
+    </style>
+}
+
+<main class="api-page">
+    <div class="container">
+        <div class="api-head">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb sf-breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Ana Sayfa</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">API Gezgini</li>
+                </ol>
+            </nav>
+            <h1 class="api-title">Booking.com API Gezgini</h1>
+            <p class="section-text">Projeye entegre edilen tüm <strong>booking-com15</strong> uç noktaları. Yeşil "Dene" butonu olanları buradan canlı çağırabilirsin; diğerleri servis katmanından (ID/zincirli parametre ile) kullanılır.</p>
+            <div class="api-stats">
+                <span class="api-stat"><i class="bi bi-diagram-3"></i> @Model.Count kategori</span>
+                <span class="api-stat"><i class="bi bi-hdd-network"></i> @total uç nokta</span>
+                <span class="api-stat"><i class="bi bi-lightning-charge"></i> @liveCount canlı denenebilir</span>
+            </div>
+        </div>
+
+        <!-- Canlı test konsolu -->
+        <section class="api-console">
+            <h2><i class="bi bi-terminal"></i> Canlı Test Konsolu</h2>
+            <p>Arama/metin parametresi (şehir, adres, para birimi vb.). Boş bırakılırsa makul bir varsayılan kullanılır.</p>
+            <div class="input-row">
+                <label for="apiQuery">Parametre (q):</label>
+                <input type="text" id="apiQuery" placeholder="ör. Istanbul / EUR" value="Istanbul">
+            </div>
+            <div class="api-result-meta" id="apiResultMeta">Bir uç noktanın "Dene" butonuna bas.</div>
+            <pre class="api-result" id="apiResult">// Yanıt burada görünecek</pre>
+        </section>
+
+        <!-- Katalog -->
+        @foreach (var group in Model)
+        {
+            <section class="api-group">
+                <div class="api-group-head">
+                    <h2>@group.Title</h2>
+                    <span>@group.Endpoints.Count uç nokta</span>
+                </div>
+                @foreach (var ep in group.Endpoints)
+                {
+                    <div class="api-endpoint">
+                        <div class="ep-main">
+                            <div class="ep-path"><span class="ep-method">GET</span>@ep.Path</div>
+                            <p class="ep-desc">@ep.Description</p>
+                        </div>
+                        @if (ep.IsLive)
+                        {
+                            <button type="button" class="btn-try" data-group="@ep.Group" data-name="@ep.Name">
+                                <i class="bi bi-play-fill"></i> Dene
+                            </button>
+                        }
+                        else
+                        {
+                            <span class="ep-tag">Servis katmanı</span>
+                        }
+                    </div>
+                }
+            </section>
+        }
+    </div>
+</main>
+
+@section Scripts {
+    <script>
+        (function () {
+            var resultEl = document.getElementById("apiResult");
+            var metaEl = document.getElementById("apiResultMeta");
+            var queryEl = document.getElementById("apiQuery");
+
+            document.querySelectorAll(".btn-try").forEach(function (btn) {
+                btn.addEventListener("click", async function () {
+                    var group = btn.dataset.group;
+                    var name = btn.dataset.name;
+                    var q = encodeURIComponent(queryEl.value.trim());
+                    var url = "@Url.Action("Call", "ApiExplorer")" + "?group=" + group + "&name=" + name + "&q=" + q;
+
+                    metaEl.textContent = "İstek gönderiliyor… (" + group + "/" + name + ")";
+                    resultEl.textContent = "Yükleniyor...";
+                    var started = performance.now();
+
+                    try {
+                        var res = await fetch(url, { headers: { "Accept": "application/json" } });
+                        var text = await res.text();
+                        var ms = Math.round(performance.now() - started);
+                        metaEl.textContent = "HTTP " + res.status + " · " + ms + " ms · " + group + "/" + name;
+                        resultEl.textContent = text;
+                    } catch (e) {
+                        metaEl.textContent = "İstek başarısız";
+                        resultEl.textContent = String(e);
+                    }
+                });
+            });
+        })();
+    </script>
+}

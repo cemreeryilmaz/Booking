@@ -1,0 +1,348 @@
+﻿@{
+    ViewData["Title"] = "Sıradaki konaklamanı keşfet";
+    ViewData["ActiveMenu"] = "home";
+    var checkIn = DateTime.Today.AddDays(14).ToString("yyyy-MM-dd");
+    var checkOut = DateTime.Today.AddDays(17).ToString("yyyy-MM-dd");
+}
+
+@section Styles {
+    <style>
+        /* ---------- Hero ---------- */
+        .hero { background: var(--sf-bg-soft); padding: 1.5rem 0 3.5rem; border-radius: 0 0 40px 40px; }
+        .hero-title { font-size: clamp(2.25rem, 4.5vw, 3.6rem); line-height: 1.08; letter-spacing: -0.035em; margin-bottom: 1.25rem; max-width: 12ch; }
+        .hero-text { font-size: 1.125rem; color: var(--sf-text); max-width: 30rem; margin-bottom: 1.75rem; }
+        .hero-trust { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; margin: 0; }
+        .hero-trust li { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; font-weight: 600; color: var(--sf-ink); }
+        .hero-trust i { color: var(--sf-primary); }
+        .hero-illustration { position: relative; max-width: 520px; margin-left: auto; }
+        .hero-illustration svg { width: 100%; height: auto; display: block; }
+        .floating-card { position: absolute; left: 0; bottom: 60px; display: flex; align-items: center; gap: 0.75rem; background: #fff; padding: 0.75rem 1rem; border-radius: var(--sf-radius); box-shadow: var(--sf-shadow); }
+        .floating-score { background: var(--sf-primary); color: #fff; font-weight: 800; font-size: 0.95rem; padding: 0.4rem 0.55rem; border-radius: 10px 10px 10px 2px; }
+        .floating-card strong { display: block; color: var(--sf-ink); font-size: 0.9rem; line-height: 1.2; }
+        .floating-card small { color: var(--sf-muted); font-size: 0.78rem; }
+
+        /* ---------- Search Area ---------- */
+        .search-panel { background: #fff; border-radius: var(--sf-radius-lg); box-shadow: var(--sf-shadow-lg); margin-top: 2rem; overflow: hidden; }
+        .search-main { padding: 0.75rem; }
+        .search-field { display: flex; align-items: center; gap: 0.85rem; height: 100%; padding: 0.9rem 1.1rem; border-radius: var(--sf-radius); cursor: text; transition: background-color 0.2s ease; position: relative; }
+        .search-field:hover, .search-field:focus-within { background: var(--sf-bg-soft); }
+        .field-icon { font-size: 1.25rem; color: var(--sf-primary); flex-shrink: 0; }
+        .field-body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+        .field-label { font-size: 0.8rem; font-weight: 600; color: var(--sf-muted); margin-bottom: 0.1rem; }
+        .field-input { border: 0; background: transparent; padding: 0; font-family: inherit; font-size: 1rem; font-weight: 700; color: var(--sf-ink); width: 100%; outline: none; }
+        .field-select { cursor: pointer; }
+        .search-btn-col { padding: 0.25rem; }
+        .btn-search { height: 100%; min-height: 64px; display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem; background: var(--sf-primary); color: #fff; font-weight: 700; font-size: 1.05rem; border: 0; border-radius: var(--sf-radius); box-shadow: 0 10px 24px rgba(59, 63, 182, 0.35); transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease; }
+        .btn-search:hover, .btn-search:focus-visible { background: var(--sf-primary-dark); color: #fff; transform: translateY(-1px); box-shadow: 0 14px 28px rgba(59, 63, 182, 0.4); }
+        .search-guests { background: #FAFBFD; border-top: 1px solid var(--sf-line); padding: 1rem 1.85rem; }
+        .counter-field { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+        .counter-label { display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.9rem; font-weight: 600; color: var(--sf-ink); margin: 0; white-space: nowrap; }
+        .counter-label i { color: var(--sf-muted); }
+        .counter { display: inline-flex; align-items: center; background: #fff; border-radius: 999px; box-shadow: var(--sf-shadow-sm); padding: 3px; }
+        .counter-btn { width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--sf-primary-soft); color: var(--sf-primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; transition: background-color 0.2s ease, color 0.2s ease; }
+        .counter-btn:hover { background: var(--sf-primary); color: #fff; }
+        .counter-value { width: 38px; border: 0; background: transparent; text-align: center; font-weight: 800; color: var(--sf-ink); font-family: inherit; outline: none; }
+        .age-select { width: auto; min-width: 110px; border: 0; border-radius: 999px; box-shadow: var(--sf-shadow-sm); font-weight: 700; font-size: 0.9rem; color: var(--sf-ink); padding: 0.45rem 2.25rem 0.45rem 1rem; }
+
+        /* ---------- Bölüm yapısı ---------- */
+        .section { padding: 5rem 0; }
+        .section-muted { background: var(--sf-bg-soft); }
+        .section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 2.5rem; }
+        .section-head-center { justify-content: center; text-align: center; }
+        .section-title { font-size: clamp(1.6rem, 2.6vw, 2.1rem); margin-bottom: 0.5rem; }
+        .section-text { color: var(--sf-muted); font-size: 1.05rem; margin: 0; }
+        .section-link { font-weight: 700; color: var(--sf-primary); white-space: nowrap; display: inline-flex; align-items: center; gap: 0.25rem; }
+
+        /* ---------- Popular Destinations ---------- */
+        .destination-card { display: block; background: #fff; border-radius: var(--sf-radius-lg); box-shadow: var(--sf-shadow); overflow: hidden; height: 100%; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .destination-img { aspect-ratio: 4 / 5; overflow: hidden; background: linear-gradient(160deg, #DADDF6, #F5F6FA); }
+        .destination-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.6s ease; }
+        .destination-body { display: flex; align-items: flex-end; justify-content: space-between; gap: 0.5rem; padding: 1.1rem 1.25rem 1.25rem; }
+        .destination-body h3 { font-size: 1.2rem; margin: 0 0 0.15rem; }
+        .destination-country { font-size: 0.875rem; color: var(--sf-muted); display: inline-flex; align-items: center; gap: 0.25rem; }
+        .destination-count { font-size: 0.8rem; font-weight: 700; color: var(--sf-primary); background: var(--sf-primary-soft); padding: 0.3rem 0.65rem; border-radius: 999px; white-space: nowrap; }
+        .destination-card:hover { transform: translateY(-6px); box-shadow: var(--sf-shadow-lg); }
+        .destination-card:hover .destination-img img { transform: scale(1.06); }
+
+        /* ---------- Accommodation Types ---------- */
+        .type-card { display: flex; flex-direction: column; align-items: flex-start; gap: 0.2rem; background: #fff; border-radius: var(--sf-radius); padding: 1.5rem; box-shadow: var(--sf-shadow-sm); height: 100%; transition: transform 0.25s ease, box-shadow 0.25s ease; }
+        .type-icon { width: 52px; height: 52px; border-radius: 14px; background: var(--sf-primary-soft); color: var(--sf-primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 0.9rem; transition: background-color 0.25s ease, color 0.25s ease; }
+        .type-name { font-weight: 800; color: var(--sf-ink); font-size: 1.05rem; }
+        .type-meta { font-size: 0.875rem; color: var(--sf-muted); }
+        .type-card:hover { transform: translateY(-4px); box-shadow: var(--sf-shadow); }
+        .type-card:hover .type-icon { background: var(--sf-primary); color: #fff; }
+
+        /* ---------- Features ---------- */
+        .feature-card { text-align: center; padding: 2.5rem 2rem; border-radius: var(--sf-radius-lg); background: #fff; box-shadow: var(--sf-shadow); height: 100%; }
+        .feature-icon { width: 64px; height: 64px; border-radius: 50%; background: var(--sf-primary-soft); color: var(--sf-primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 1.25rem; }
+        .feature-card h3 { font-size: 1.2rem; margin-bottom: 0.5rem; }
+        .feature-card p { color: var(--sf-muted); margin: 0 auto; max-width: 28ch; }
+
+        @@media (min-width: 992px) {
+            .search-main .row > [class*="col-lg-"]:not(.search-btn-col):not(:nth-last-child(2)) .search-field::after { content: ""; position: absolute; right: 0; top: 22%; height: 56%; width: 1px; background: var(--sf-line); }
+        }
+
+        @@media (max-width: 991.98px) {
+            .hero { padding-top: 1rem; border-radius: 0 0 28px 28px; }
+            .hero-title { max-width: none; }
+            .search-main { padding: 0.5rem; }
+            .search-field { background: var(--sf-bg-soft); margin: 0.25rem; height: auto; }
+            .search-guests { padding: 1rem 1.25rem; }
+            .btn-search { min-height: 56px; margin-top: 0.25rem; }
+            .section { padding: 3.5rem 0; }
+        }
+
+        @@media (max-width: 575.98px) {
+            .section-head { flex-direction: column; align-items: flex-start; }
+            .section-head-center { align-items: center; }
+            .destination-img { aspect-ratio: 16 / 10; }
+            .type-card { padding: 1.25rem; }
+        }
+    </style>
+}
+
+<main>
+    <!-- Hero + Arama -->
+    <section class="hero">
+        <div class="container">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-6">
+                    <h1 class="hero-title">Sıradaki konaklamanı keşfet.</h1>
+                    <p class="hero-text">Dünyanın dört bir yanındaki otelleri karşılaştır, sana en uygun konaklamayı kolayca bul.</p>
+                    <ul class="hero-trust list-unstyled">
+                        <li><i class="bi bi-shield-check"></i> Güvenli rezervasyon</li>
+                        <li><i class="bi bi-tag"></i> Şeffaf fiyatlar</li>
+                        <li><i class="bi bi-headset"></i> 7/24 destek</li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-6 d-none d-lg-block">
+                    <div class="hero-illustration" aria-hidden="true">
+                        <svg viewBox="0 0 520 360" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="300" cy="190" r="160" fill="#E9EBFB" />
+                            <circle cx="415" cy="80" r="26" fill="#FFD9A8" />
+                            <g fill="#FFFFFF">
+                                <rect x="120" y="70" width="90" height="26" rx="13" />
+                                <rect x="140" y="56" width="46" height="30" rx="15" />
+                                <rect x="380" y="140" width="80" height="22" rx="11" />
+                            </g>
+                            <rect x="230" y="120" width="140" height="210" rx="10" fill="#FFFFFF" />
+                            <rect x="230" y="120" width="140" height="26" rx="10" fill="#3B3FB6" />
+                            <text x="300" y="138" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="12" font-weight="800" fill="#FFFFFF" letter-spacing="3">HOTEL</text>
+                            <g fill="#DADDF6">
+                                <rect x="248" y="162" width="22" height="26" rx="4" />
+                                <rect x="289" y="162" width="22" height="26" rx="4" />
+                                <rect x="330" y="162" width="22" height="26" rx="4" />
+                                <rect x="289" y="202" width="22" height="26" rx="4" fill="#FFD9A8" />
+                            </g>
+                            <rect x="282" y="284" width="36" height="46" rx="6" fill="#3B3FB6" />
+                            <rect x="60" y="330" width="420" height="4" rx="2" fill="#DADDF6" />
+                        </svg>
+                        <div class="floating-card">
+                            <span class="floating-score">9,2</span>
+                            <div>
+                                <strong>Mükemmel</strong>
+                                <small>1.284 misafir yorumu</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Arama Formu: GET ile Hotel/HotelList aksiyonuna gider -->
+            <form class="search-panel" asp-controller="Hotel" asp-action="HotelList" method="get" role="search" data-search-form>
+                <div class="search-main">
+                    <div class="row g-0 align-items-stretch">
+                        <!-- Lokasyon -->
+                        <div class="col-12 col-lg-4">
+                            <label class="search-field" for="Destination">
+                                <i class="bi bi-geo-alt field-icon"></i>
+                                <span class="field-body">
+                                    <span class="field-label">Nereye gidiyorsunuz?</span>
+                                    <input type="text" id="Destination" name="Destination" class="field-input"
+                                           value="Milano" placeholder="Şehir, bölge veya otel adı" required>
+                                </span>
+                            </label>
+                        </div>
+                        <!-- Giriş -->
+                        <div class="col-6 col-lg-2">
+                            <label class="search-field" for="CheckIn">
+                                <i class="bi bi-calendar3 field-icon"></i>
+                                <span class="field-body">
+                                    <span class="field-label">Giriş</span>
+                                    <input type="date" id="CheckIn" name="CheckIn" class="field-input" value="@checkIn">
+                                </span>
+                            </label>
+                        </div>
+                        <!-- Çıkış -->
+                        <div class="col-6 col-lg-2">
+                            <label class="search-field" for="CheckOut">
+                                <i class="bi bi-calendar3 field-icon"></i>
+                                <span class="field-body">
+                                    <span class="field-label">Çıkış</span>
+                                    <input type="date" id="CheckOut" name="CheckOut" class="field-input" value="@checkOut">
+                                </span>
+                            </label>
+                        </div>
+                        <!-- Para Birimi -->
+                        <div class="col-12 col-lg-2">
+                            <label class="search-field" for="Currency">
+                                <i class="bi bi-cash-coin field-icon"></i>
+                                <span class="field-body">
+                                    <span class="field-label">Para Birimi</span>
+                                    <select id="Currency" name="Currency" class="field-input field-select">
+                                        <option value="EUR" selected>EUR</option>
+                                        <option value="USD">USD</option>
+                                        <option value="TRY">TRY</option>
+                                        <option value="GBP">GBP</option>
+                                    </select>
+                                </span>
+                            </label>
+                        </div>
+                        <!-- Arama butonu -->
+                        <div class="col-12 col-lg-2 search-btn-col">
+                            <button type="submit" class="btn btn-search w-100">
+                                <i class="bi bi-search"></i>
+                                <span>Otelleri Ara</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Misafir ve oda bilgileri -->
+                <div class="search-guests">
+                    <div class="row g-3 align-items-center">
+                        <!-- Yetişkin -->
+                        <div class="col-12 col-sm-6 col-lg-3">
+                            <div class="counter-field">
+                                <span class="counter-label"><i class="bi bi-person"></i> Yetişkin</span>
+                                <div class="counter" data-min="1" data-max="10">
+                                    <button type="button" class="counter-btn" data-action="minus" aria-label="Yetişkin azalt"><i class="bi bi-dash"></i></button>
+                                    <input type="text" name="Adults" class="counter-value" value="2" readonly aria-label="Yetişkin sayısı">
+                                    <button type="button" class="counter-btn" data-action="plus" aria-label="Yetişkin artır"><i class="bi bi-plus"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Çocuk -->
+                        <div class="col-12 col-sm-6 col-lg-3">
+                            <div class="counter-field">
+                                <span class="counter-label"><i class="bi bi-emoji-smile"></i> Çocuk</span>
+                                <div class="counter" id="childCounter" data-min="0" data-max="6">
+                                    <button type="button" class="counter-btn" data-action="minus" aria-label="Çocuk azalt"><i class="bi bi-dash"></i></button>
+                                    <input type="text" name="Children" class="counter-value" value="0" readonly aria-label="Çocuk sayısı">
+                                    <button type="button" class="counter-btn" data-action="plus" aria-label="Çocuk artır"><i class="bi bi-plus"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Oda -->
+                        <div class="col-12 col-sm-6 col-lg-3">
+                            <div class="counter-field">
+                                <span class="counter-label"><i class="bi bi-door-closed"></i> Oda</span>
+                                <div class="counter" data-min="1" data-max="5">
+                                    <button type="button" class="counter-btn" data-action="minus" aria-label="Oda azalt"><i class="bi bi-dash"></i></button>
+                                    <input type="text" name="Rooms" class="counter-value" value="1" readonly aria-label="Oda sayısı">
+                                    <button type="button" class="counter-btn" data-action="plus" aria-label="Oda artır"><i class="bi bi-plus"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Çocuk Yaşı (çocuk sayısı 0'dan büyükse görünür) -->
+                        <div class="col-12 col-sm-6 col-lg-3 d-none" id="childAgeWrapper">
+                            <div class="counter-field">
+                                <label class="counter-label" for="ChildAges"><i class="bi bi-balloon"></i> Çocuk Yaşı</label>
+                                <select id="ChildAges" name="ChildAges" class="form-select age-select">
+                                    @for (int age = 0; age <= 17; age++)
+                                    {
+                                        <option value="@age" selected="@(age == 7)">@age yaş</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Popular Destinations -->
+    <section class="section" id="destinations">
+        <div class="container">
+            <div class="section-head">
+                <div>
+                    <h2 class="section-title">Popüler Destinasyonları Keşfet</h2>
+                    <p class="section-text">Seyahat severlerin en çok tercih ettiği şehirlerden ilham al.</p>
+                </div>
+            </div>
+            <div class="row g-4">
+                @{
+                    var destinations = new[]
+                    {
+                        ("Milano", "İtalya", "https://images.unsplash.com/photo-1513581166391-887a96ddeafd?w=800&q=80&auto=format&fit=crop", "1.240+ konaklama"),
+                        ("Roma", "İtalya", "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800&q=80&auto=format&fit=crop", "2.180+ konaklama"),
+                        ("Paris", "Fransa", "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80&auto=format&fit=crop", "3.420+ konaklama"),
+                        ("Barcelona", "İspanya", "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&q=80&auto=format&fit=crop", "1.890+ konaklama"),
+                    };
+                }
+                @foreach (var (city, country, img, count) in destinations)
+                {
+                    <div class="col-12 col-sm-6 col-lg-3">
+                        <a class="destination-card" asp-controller="Hotel" asp-action="HotelList"
+                           asp-route-Destination="@city" asp-route-CheckIn="@checkIn" asp-route-CheckOut="@checkOut"
+                           asp-route-Adults="2" asp-route-Rooms="1" asp-route-Currency="EUR">
+                            <div class="destination-img">
+                                <img src="@img" alt="@city" loading="lazy">
+                            </div>
+                            <div class="destination-body">
+                                <div>
+                                    <h3>@city</h3>
+                                    <span class="destination-country"><i class="bi bi-geo-alt"></i> @country</span>
+                                </div>
+                                <span class="destination-count">@count</span>
+                            </div>
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    <!-- Accommodation Types -->
+    <section class="section section-muted">
+        <div class="container">
+            <div class="section-head">
+                <div>
+                    <h2 class="section-title">Nasıl bir konaklama arıyorsunuz?</h2>
+                    <p class="section-text">Seyahat tarzına uygun konaklama türünü seç, aramanı daralt.</p>
+                </div>
+            </div>
+            <div class="row g-3 g-lg-4">
+                <div class="col-6 col-lg-3"><div class="type-card"><span class="type-icon"><i class="bi bi-building"></i></span><span class="type-name">Oteller</span><span class="type-meta">8.420 seçenek</span></div></div>
+                <div class="col-6 col-lg-3"><div class="type-card"><span class="type-icon"><i class="bi bi-house"></i></span><span class="type-name">Daireler</span><span class="type-meta">3.150 seçenek</span></div></div>
+                <div class="col-6 col-lg-3"><div class="type-card"><span class="type-icon"><i class="bi bi-sun"></i></span><span class="type-name">Resort</span><span class="type-meta">960 seçenek</span></div></div>
+                <div class="col-6 col-lg-3"><div class="type-card"><span class="type-icon"><i class="bi bi-house-door"></i></span><span class="type-name">Tatil Evleri</span><span class="type-meta">2.370 seçenek</span></div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="section">
+        <div class="container">
+            <div class="section-head section-head-center">
+                <div>
+                    <h2 class="section-title">Neden StayFinder?</h2>
+                    <p class="section-text">Doğru oteli bulmak için ihtiyacın olan her şey tek bir yerde.</p>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-12 col-md-4"><div class="feature-card"><span class="feature-icon"><i class="bi bi-globe2"></i></span><h3>Binlerce Otel</h3><p>Dünyanın farklı şehirlerindeki konaklama seçeneklerini keşfedin.</p></div></div>
+                <div class="col-12 col-md-4"><div class="feature-card"><span class="feature-icon"><i class="bi bi-star"></i></span><h3>Gerçek Puanlar</h3><p>Misafir değerlendirmelerine göre otelleri kolayca karşılaştırın.</p></div></div>
+                <div class="col-12 col-md-4"><div class="feature-card"><span class="feature-icon"><i class="bi bi-currency-exchange"></i></span><h3>Farklı Para Birimleri</h3><p>Fiyatları tercih ettiğiniz para biriminde görüntüleyin.</p></div></div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- Arama sırasında gösterilen yükleniyor katmanı -->
+<div class="sf-loading-overlay" id="sfLoading" aria-live="polite" aria-hidden="true">
+    <div class="spinner-border" role="status"></div>
+    <span>Oteller aranıyor...</span>
+</div>
