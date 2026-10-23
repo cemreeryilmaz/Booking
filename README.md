@@ -163,6 +163,38 @@ Booking.Web/
 - **Hata Yönetimi:** Şehir bulunamazsa / sonuç dönmezse / ağ hatası olursa kullanıcıya uygun uyarı gösterilir; arama sırasında "loading" katmanı çıkar.
 - **Kod Kalitesi:** Servis katmanı (`IBookingApiService`), DTO ↔ ViewModel ayrımı, anlamlı isimlendirme ve yorumlar.
 
+<br><br>
+
+## 🖼️ Projeden Ekran Görüntüleri
+
+### ➡️ Ana Sayfa & Arama
+<div align="center">
+  <img src="ss/01-anasayfa.png" alt="Ana sayfa ve otel arama formu">
+</div>
+
+### ➡️ Otel Listesi
+<div align="center">
+  <img src="ss/02-otel-listesi.png" alt="Arama sonucu otel listesi (kart: isim, fotoğraf, fiyat, puan)">
+</div>
+
+### ➡️ Otel Detayı
+<div align="center">
+  <img src="ss/03-otel-detay.png" alt="Otel detay sayfası: galeri, açıklama, imkanlar, konum, odalar">
+</div>
+
+### ➡️ Demo Rezervasyon (Oda Seç)
+<div align="center">
+  <img src="ss/04-rezervasyon-modal.png" alt="Oda seçiminde açılan demo rezervasyon onay modalı">
+</div>
+
+### ➡️ API Gezgini (Tüm Endpoint'ler)
+<div align="center">
+  <img src="ss/05-api-gezgini.png" alt="Tüm booking-com15 uç noktalarının listelendiği ve canlı denenebildiği API Gezgini sayfası">
+</div>
+
+> 💡 Not: Liste/detay görüntüleri, istek limitini korumak için **demo (mock) veri** modunda alınmıştır;
+> geçerli bir RapidAPI anahtarı ile aynı ekranlar canlı Booking.com verisiyle çalışır.
+
 ---
 
 ## 📝 Teslim Notları
